@@ -1,14 +1,17 @@
 import axios from 'axios';
 import { View, Text, StyleSheet,  } from "react-native";
-import React, { useState} from 'react';
+import React, { useState, useContext} from 'react';
 import * as Location from 'expo-location';
+import {LocationContext} from './context/LocationContext'
 const MAX_STACK: number = 30;
 let API_KEY = 'pk.9c62c5b7e16a44aa885c1a331bd5358'
 
 function App() { 
+  //const { locationStamp, setLocationStamp } = useContext(LocationContext)
   const [currentDate, setCurrentDate] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   interface LocationInterface { latitude: number, longitude: number };
+  const [previousData, setPreviousData] = useState<any>([]);
   const [Detail, setDetail] = useState({
     "display_name":""
   })
@@ -25,7 +28,6 @@ function App() {
       date + '/' + month + '/' + year
       + ' ' + hours + ':' + min + ':' + sec
     );
-    //   console.log("latitude", latitude)
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -43,28 +45,50 @@ function App() {
         .then((response) => {
           console.log(response.data, "this is the response")
           setDetail(response.data)
-        })
-        .catch(error => console.log(error));
+
+          setPreviousData((prev:any) => [...prev, response.data])
+        }).catch(error => console.log(error));
       }
       setlocationdata();
+      // const interval = setInterval(() => {
+      //   console.log('This will run every second!');
+      // }, 1000);
+      // return () => clearInterval(interval);
+      // const interval = setInterval(() => {
+      //     setlocationdata;
+      // }, 30000);
+      // return () => clearInterval(interval);
+      setInterval(setlocationdata, 30000);
+      
     }, [location.latitude, location.longitude]);
 return (
   <View style={styles.container}>
-      <View style={styles.currentLocatinContainer}>
+      <View>
         <View>
-        <Text style={styles.currentLocatinText}>Current Location</Text>
+        <Text>Current Location</Text>
         <Text></Text>
         <Text>{Detail?.display_name}</Text>
       </View>
       <View >
       </View>
-      <View style={styles.currentLocationStamps}>
-        <Text style={styles.currentLocatinDate}>{currentDate},</Text>
+      <View>
+        <Text>{currentDate},</Text>
       </View>
     </View>
 
-    <View style={styles.currentLocatinContainer}>
-        <Text style={styles.currentLocatinText}>Previous Locations</Text>
+    <View>
+        <Text>Previous Locations</Text>
+        {
+          previousData.map(data => 
+          {
+            return (
+              <View>
+                <Text>{
+                  data.display_name}</Text>
+              </View>
+            )
+          })
+        }
       </View>
     </View>
 );
@@ -73,29 +97,6 @@ return (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  currentLocatinContainer: {
-    backgroundColor: '#F1C7C9',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    marginHorizontal: 10,
-    marginVertical: 5,
-    flexWrap: 'wrap',
-    shadowColor: '#d8bfd8',
-    elevation: 3
-  },
-  currentLocatinText: {
-    fontSize: 25,
-    fontWeight: 'bold',
-  },
-  currentLocationStamps: {
-    flexDirection: 'row',
-  },
-  currentLocatinDate: {
-    fontSize: 15,
-    paddingRight: 5,
-    fontWeight: 'bold',
-    color: '#5a5a5a'
   }
 })
 
