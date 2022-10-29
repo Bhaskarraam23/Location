@@ -1,6 +1,6 @@
 import axios from "axios";
 
-async function fetchLocation(lat: any, long:any) {  
+async function fetchLocation({lat, long}:any) {  
     try {
         const response = await axios.get(`https://us1.locationiq.com/v1/reverse?key=pk.9c62c5b7e16a44aa885c1a331bd5358d&lat=${lat}&lon=${long}&format=json`);           
         return response.data;
