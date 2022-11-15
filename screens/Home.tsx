@@ -1,10 +1,11 @@
 import axios from 'axios';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import React, { useState} from 'react';
+import { Button } from 'react-native-paper';
 import * as Location from 'expo-location';
 const MAX_STACK: number = 30;
 
-function App() { 
+const App = ({ navigation }: any) => {
   const [currentDate, setCurrentDate] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   interface LocationInterface { latitude: number, longitude: number };
@@ -16,12 +17,7 @@ function App() {
   })
   
 
-  // const renderItem = ({ item }) => (
-  //   <Item title={item.title} />
-  // );
-  const renderItem = ({ item }:any) => (
-    <Item id={item.place_id} locationName={item.display_name} />
-  );
+  
   
   // const deleteItem = (item) => {
   //   let newProducts = data.filter(
@@ -29,40 +25,36 @@ function App() {
   //   );
   //   setData(newProducts);
   // };
-  const deleteItem = (previousLocationID:any) => {
-    const newRecentList = previousData.filter((item:any) => item.place_id != previousLocationID)
-    setPreviousData(newRecentList)
-  }
-  const onClickClearAll = () => {
-    Alert.alert(
-      'clear all location?',
-      'only previous location or only current location',
-      [
-        {
-          text: 'Only Previous',
-          onPress: () => {
-            setPreviousData([]);
-          }
-        },
-        {
-          text: 'Current', 
-          onPress: () => {
-            alert('Done')
-          }
-        }
-      ]
-    )
-  }
+  const handleButton = () => {
+    navigation.navigate('Maps', {location})
+}
+// handleDelete = itemId => {
+//   const items = this.state.items.filter(item => item.id !== itemId);
+//   this.setState({ items: items });
+// };
+  // const deleteItem = (preID:any) => {
+  //   const newRecentList = previousData.filter((item:any) => item.id != preID)
+  //   setPreviousData(newRecentList)
+  // }
+  
   const Item = ({ id,  locationName }:any) => (
     <View style={styles.flexColumn}>
       <View style={styles.ItemContent} >
         <Text>{locationName}</Text>
         <Text>{currentDate}</Text>
       </View>
-      <TouchableOpacity activeOpacity={0.7} style={styles.removeButton} onPress={() => deleteItem(id)}>
+      <TouchableOpacity activeOpacity={0.7} style={styles.removeButton} onPress={() => { setPreviousData((prevState:any) => prevState.filter((_item, _Index) => _Index));}}>
         <Text>Remove</Text>
       </TouchableOpacity>
     </View>
+  );
+
+  // const renderItem = ({ item }) => (
+  //   <Item title={item.title} />
+  // );
+  
+  const renderItem = ({ item }:any) => (
+    <Item id={item.id} locationName={item.display_name} />
   );
   
   React.useEffect(() => {
@@ -89,6 +81,11 @@ function App() {
         longitude: location.coords["longitude"]
       });
     })();
+    if (previousData.length === MAX_STACK) {
+      setMaxStackMsg(true);
+    } else {
+      setMaxStackMsg(false);
+    }
     if (location.latitude !== 0) {
       const setlocationdata = async () => {
         await axios.get(`https://us1.locationiq.com/v1/reverse?key=pk.9c62c5b7e16a44aa885c1a331bd5358d&lat=${location.latitude}&lon=${location.longitude}&format=json`)
@@ -99,18 +96,41 @@ function App() {
           }).catch(error => console.log(error));
         }
         setlocationdata();
-        if (previousData.length === MAX_STACK) {
-          setMaxStackMsg(true);
-        } else {
-          setMaxStackMsg(false);
-        }
-    
-        // call every 5 minute
+
+//         var intervalId = null;
+// var varCounter = 0;
+// var varName = function(){
+//      if(varCounter <= 10) {
+//           varCounter++;
+//           /* your code goes here */
+//      } else {
+//           clearInterval(intervalId);
+//      }
+// }; var intervalId = null;
+// var intervalId = null;
+// var varCounter = 0;
+// var varName = function(){
+//      if(varCounter <= 10) {
+//           varCounter++;
+//           /* your code goes here */
+//      } else {
+//           clearInterval(intervalId);
+//      }
+// };
+
         
-        console.log("previousData.length", previousData.length)
+    
+        const interval = setInterval(() => {
           if (previousData.length < MAX_STACK) {
-            setInterval(setlocationdata, 30000);
+            setlocationdata();
           }
+        }, 30000);
+        return () => clearInterval(interval);
+        
+        // console.log("previousData.length", previousData.length)
+        //   if (previousData.length < MAX_STACK) {
+        //     setInterval(setlocationdata, 30000);
+        //   }
     }
     
       
@@ -124,7 +144,7 @@ return (
   <View style={styles.container}>
       <View style={styles.currentLocationContainer}>
         <View>
-        <Text style={styles.currentLocationText}>Current Location</Text>
+        <Text style={styles.currentLocationText}>Current Locations</Text>
         <Text></Text>
         <Text>{Detail?.display_name}</Text>
       </View>
@@ -154,24 +174,50 @@ return (
         renderItem={renderItem}
         keyExtractor={item => item.id}
       /> */}
-      <Text>
-        <Text style={styles.previousLocationText}>Previous Location</Text>
+      <Text style={styles.previousLocationText}>Previous Location</Text>
+      <View style={{flex: 1,width:"100%"}}>
       <FlatList
-        style={styles.flatList}
-        data={previousData}
+        data={previousData.slice(0,5)}
         renderItem={renderItem}
         keyExtractor={item => item.id}
       />
 
+        {/* <TouchableOpacity
+          onPress={() => { setPreviousData((prevState:any) => prevState.filter((_item, _Index) => _Index !== _Index));}}
+          style={{
+            backgroundColor: '#0066ff',
+            marginBottom: 20,
+            borderRadius: 5,
+            width: 350,
+            marginLeft: 12,
+          }}
+          mode="contained">
+          Clear All
+      //   </TouchableOpacity> */}
+
+        
+     
+      </View>
       <TouchableOpacity
         activeOpacity={0.7}
         style={styles.touchOpacityStyle} 
-        onPress={() => onClickClearAll()}
-        
+        onPress={() => { setPreviousData((prevState:any) => prevState.filter((_item, _Index) => _Index !== _Index));}}
       >
-        <Text style={[{ fontWeight: '500' }, { color: maxStackMsg ? '#ff5100' : 'solid black' }]}>Clear all</Text>
-      </TouchableOpacity>
-      </Text>
+        <Text>Clear all</Text>
+      </TouchableOpacity> 
+      <TouchableOpacity
+        style={styles.mapss} 
+        onPress={() => {
+          navigation.navigate('Maps', {
+           location
+          });
+        }}
+      >
+        <Text>Maps</Text>
+      </TouchableOpacity> 
+      {/* <View style={styles.mapss}>
+        <Menu/>
+      </View> */}
     </View>
 );
 
@@ -182,13 +228,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    marginVertical: 3,
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    marginVertical: 10,
     borderRadius: 10,
     marginHorizontal: 10,
     shadowColor: '#dfdfdf',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.29,
     shadowRadius: 5,
     elevation: 2
@@ -232,7 +278,7 @@ const styles = StyleSheet.create({
   },
   flatList: {
     flex: 3,
-    width: '100%',
+    width: '50%',
   },
 
   touchOpacityStyle: {
@@ -244,11 +290,27 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     borderRadius: 10,
-    paddingHorizontal: 60,
+    paddingHorizontal: 40,
     paddingVertical: 10,
     marginRight: 20,
 
-    left: '30%',
+    left: '5%',
+    // right: 0,
+  },
+  mapss: {
+    backgroundColor: '#FF9899',
+    borderWidth: 1,
+    alignItems: 'center',
+    alignSelf: "center",
+    justifyContent: 'center',
+    position: 'absolute',
+    bottom: 30,
+    borderRadius: 10,
+    paddingHorizontal: 50,
+    paddingVertical: 10,
+    marginRight: 20,
+
+    left: '55%',
     // right: 0,
   },
   removeButton: {
@@ -256,6 +318,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
+  line:{
+    marginBottom:20,
+    borderColor:"grey",
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
   
 })
 

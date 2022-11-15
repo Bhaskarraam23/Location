@@ -1,19 +1,21 @@
 import React from 'react';
-import detail from './detail';
+import Home from './screens/Home';
+import Maps from './Maps';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
-const Location_App = () => {
+const Weather_App = () => {
   const Stack = createStackNavigator();
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName='detail'>
-        <Stack.Screen name="detail" component={detail} />
+      <Stack.Navigator initialRouteName='Home'>
+        <Stack.Screen name=" " component={Home} />
+        <Stack.Screen name="Maps" component={Maps} /> 
       </Stack.Navigator>
     </NavigationContainer>
 
   );
 };
 
-export default Location_App;
+export default Weather_App;
